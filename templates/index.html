@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Поиск книг</h5>
+        <form method="get" action="{{ url_for('main.index') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Название</label>
+                <input type="text" name="title" class="form-control" placeholder="Название" value="{{ f_title }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Автор</label>
+                <input type="text" name="author" class="form-control" placeholder="Автор" value="{{ f_author }}">
+            </div>
+            <div class="col-md-2 position-relative">
+                <label class="form-label small text-muted mb-1">Жанр</label>
+                <div class="dropdown-genre">
+                    <button type="button" class="form-select text-start" onclick="toggleGenreDropdown()">
+                        {% set selected_genre_names = [] %}
+                        {% for g in all_genres %}
+                            {% if g.id in f_genres %}
+                                {% set _ = selected_genre_names.append(g.name) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ selected_genre_names|join(', ') if selected_genre_names else 'Выбрать жанры' }}
+                    </button>
+                    <div class="dropdown-genre-menu" id="genreDropdown">
+                        {% for g in all_genres %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="genre" value="{{ g.id }}"
+                                   id="filter_genre_{{ g.id }}" {% if g.id in f_genres %}checked{% endif %}>
+                            <label class="form-check-label" for="filter_genre_{{ g.id }}">{{ g.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 position-relative">
+                <label class="form-label small text-muted mb-1">Год</label>
+                <div class="dropdown-year">
+                    <button type="button" class="form-select text-start" onclick="toggleYearDropdown()">
+                        {% set selected_year_names = [] %}
+                        {% for y in all_years %}
+                            {% if y in f_years %}
+                                {% set _ = selected_year_names.append(y|string) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ selected_year_names|join(', ') if selected_year_names else 'Выбрать годы' }}
+                    </button>
+                    <div class="dropdown-year-menu" id="yearDropdown">
+                        {% for y in all_years %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="year" value="{{ y }}"
+                                   id="filter_year_{{ y }}" {% if y in f_years %}checked{% endif %}>
+                            <label class="form-check-label" for="filter_year_{{ y }}">{{ y }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small text-muted mb-1">Объём</label>
+                <input type="number" name="pages_from" class="form-control" placeholder="От" value="{{ f_pf }}">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small text-muted mb-1">Объём</label>
+                <input type="number" name="pages_to" class="form-control" placeholder="До" value="{{ f_pt }}">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Найти</button>
+                <a href="{{ url_for('main.index', clear=1) }}" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h2>Список книг</h2>
+
+{% if books.items %}
+<div class="row">
+    {% for book in books.items %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="row g-0">
+                <div class="col-4">
+                    {% if book.cover %}
+                    <img src="{{ url_for('main.uploaded_file', filename=book.cover.filename) }}"
+                         class="img-fluid rounded-start h-100" style="object-fit:cover;" alt="">
+                    {% else %}
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center h-100">
+                        Нет обложки
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ book.title }}</h5>
+                        <p class="card-text mb-1">
+                            <small class="text-muted">
+                                {{ book.genres|map(attribute='name')|join(', ') }} | {{ book.year }}
+                            </small>
+                        </p>
+                        {% set ns = namespace(s=0, c=0) %}
+                        {% for r in book.reviews %}
+                            {% set ns.s = ns.s + r.rating %}
+                            {% set ns.c = ns.c + 1 %}
+                        {% endfor %}
+                        <p class="card-text">
+                            Оценка:
+                            {% if ns.c %}
+                                <b>{{ "%.1f"|format(ns.s / ns.c) }}</b> ({{ ns.c }} рец.)
+                            {% else %}
+                                нет
+                            {% endif %}
+                        </p>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('main.book_view', book_id=book.id) }}" class="btn btn-info">Просмотр</a>
+                            {% if can_edit(current_user) %}
+                            <a href="{{ url_for('books.book_edit', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
+                            {% endif %}
+                            {% if can_delete(current_user) %}
+                            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delModal{{ book.id }}">Удалить</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if can_delete(current_user) %}
+    <div class="modal fade" id="delModal{{ book.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удаление книги</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Вы уверены, что хотите удалить книгу <b>"{{ book.title }}"</b>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                    <form action="{{ url_for('books.book_delete', book_id=book.id) }}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Да</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if books.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('main.index', page=books.prev_num, title=f_title, author=f_author, genre=f_genres, year=f_years, pages_from=f_pf, pages_to=f_pt) }}">Назад</a>
+        </li>
+        {% endif %}
+        {% for p in books.iter_pages() %}
+            {% if p %}
+                {% if p != books.page %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.index', page=p, title=f_title, author=f_author, genre=f_genres, year=f_years, pages_from=f_pf, pages_to=f_pt) }}">{{ p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+        {% endfor %}
+        {% if books.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('main.index', page=books.next_num, title=f_title, author=f_author, genre=f_genres, year=f_years, pages_from=f_pf, pages_to=f_pt) }}">Вперёд</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% else %}
+    <p>Книги не найдены.</p>
+{% endif %}
+
+{% if can_delete(current_user) %}
+<div class="mt-3">
+    <a href="{{ url_for('books.book_add') }}" class="btn btn-success">Добавить книгу</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleGenreDropdown() {
+    document.getElementById('genreDropdown').classList.toggle('show');
+    document.getElementById('yearDropdown').classList.remove('show');
+}
+function toggleYearDropdown() {
+    document.getElementById('yearDropdown').classList.toggle('show');
+    document.getElementById('genreDropdown').classList.remove('show');
+}
+document.addEventListener('click', function(e) {
+    const genreDropdown = document.querySelector('.dropdown-genre');
+    const yearDropdown = document.querySelector('.dropdown-year');
+    if (genreDropdown && !genreDropdown.contains(e.target)) {
+        document.getElementById('genreDropdown').classList.remove('show');
+    }
+    if (yearDropdown && !yearDropdown.contains(e.target)) {
+        document.getElementById('yearDropdown').classList.remove('show');
+    }
+});
+</script>
+{% endblock %}

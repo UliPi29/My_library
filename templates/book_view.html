@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">← Назад</a>
+    {% if can_edit(current_user) %}
+    <a href="{{ url_for('books.book_edit', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        {% if book.cover %}
+        <img src="{{ url_for('main.uploaded_file', filename=book.cover.filename) }}"
+             class="img-fluid rounded shadow" alt="{{ book.title }}">
+        {% else %}
+        <div class="bg-secondary text-white text-center p-5 rounded">Нет обложки</div>
+        {% endif %}
+    </div>
+    <div class="col-md-8">
+        <h1>{{ book.title }}</h1>
+
+        <div class="book-meta">
+            <div class="book-meta-row">
+                <span class="book-meta-label">Автор</span>
+                <span class="book-meta-line"></span>
+                <span class="book-meta-value">{{ book.author }}</span>
+            </div>
+            <div class="book-meta-row">
+                <span class="book-meta-label">Издательство</span>
+                <span class="book-meta-line"></span>
+                <span class="book-meta-value">{{ book.publisher }}</span>
+            </div>
+            <div class="book-meta-row">
+                <span class="book-meta-label">Год</span>
+                <span class="book-meta-line"></span>
+                <span class="book-meta-value">{{ book.year }}</span>
+            </div>
+            <div class="book-meta-row">
+                <span class="book-meta-label">Объём</span>
+                <span class="book-meta-line"></span>
+                <span class="book-meta-value">{{ book.pages }} стр.</span>
+            </div>
+            <div class="book-meta-row">
+                <span class="book-meta-label">Жанры</span>
+                <span class="book-meta-line"></span>
+                <span class="book-meta-value">{{ book.genres|map(attribute='name')|join(', ') }}</span>
+            </div>
+            <div class="book-meta-row">
+                <span class="book-meta-label">Рейтинг</span>
+                <span class="book-meta-line"></span>
+                <span class="book-meta-value">{{ avg_rating if avg_rating else '—' }} ({{ review_count }} рец.)</span>
+            </div>
+        </div>
+
+        <h4 class="mt-4">Описание</h4>
+        <div class="book-description border rounded p-3 bg-light">
+            {{ md(book.short_description)|safe }}
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<h3>Рецензии</h3>
+
+{% for review in reviews %}
+    {% if not (current_user.is_authenticated and review.user_id == current_user.id) %}
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>{{ review.user.full_name() }}</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="review-rating">Оценка: {{ review.rating }}</span>
+                {% if can_edit(current_user) %}
+                <a href="{{ url_for('reviews.edit_review', review_id=review.id) }}" class="btn btn-sm btn-review-edit">Редактировать</a>
+                <form action="{{ url_for('reviews.delete_review', review_id=review.id) }}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-review-delete">Удалить</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            {{ md(review.text)|safe }}
+            <div class="text-muted mt-2"><small>{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</small></div>
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+<p>Пока нет рецензий.</p>
+{% endfor %}
+
+{% if user_review %}
+<div class="card border-success mt-3">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong class="text-mp-green">{{ user_review.user.full_name() }}</strong>
+        <div class="d-flex align-items-center gap-2">
+            <span class="review-rating">Оценка: {{ user_review.rating }}</span>
+            {% if can_edit(current_user) %}
+            <a href="{{ url_for('reviews.edit_review', review_id=user_review.id) }}" class="btn btn-sm btn-review-edit">Редактировать</a>
+            <form action="{{ url_for('reviews.delete_review', review_id=user_review.id) }}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-review-delete">Удалить</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        {{ md(user_review.text)|safe }}
+        <div class="text-muted mt-2"><small>{{ user_review.created_at.strftime('%d.%m.%Y %H:%M') }}</small></div>
+    </div>
+</div>
+{% elif can_review %}
+    <a href="{{ url_for('reviews.add_review', book_id=book.id) }}" class="btn btn-primary mt-3">Написать рецензию</a>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% macro book_form(genres, book=None, edit_mode=False, form_data=None) %}
+<form method="post" {% if not edit_mode %}enctype="multipart/form-data"{% endif %}>
+    <div class="mb-3">
+        <label class="form-label">Название *</label>
+        <input type="text" name="title" class="form-control" required
+               value="{{ book.title if book else (form_data.get('title', '') if form_data else '') }}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Краткое описание *</label>
+        <textarea name="short_description" id="md-editor" class="form-control" rows="6">
+{{- book.short_description if book else (form_data.get('short_description', '') if form_data else '') -}}</textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Год издания *</label>
+            <input type="number" name="year" class="form-control" required
+                   value="{{ book.year if book else (form_data.get('year', '') if form_data else '') }}">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Объём (стр.) *</label>
+            <input type="number" name="pages" class="form-control" required
+                   value="{{ book.pages if book else (form_data.get('pages', '') if form_data else '') }}">
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Издательство *</label>
+        <input type="text" name="publisher" class="form-control" required
+               value="{{ book.publisher if book else (form_data.get('publisher', '') if form_data else '') }}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Автор *</label>
+        <input type="text" name="author" class="form-control" required
+               value="{{ book.author if book else (form_data.get('author', '') if form_data else '') }}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Жанры *</label>
+        <div class="row">
+            {% for g in genres %}
+            <div class="col-md-4 col-sm-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="genres" value="{{ g.id }}"
+                           id="genre_{{ g.id }}"
+                           {% if (book and g in book.genres) or (form_data and g.id|string in form_data.getlist('genres')) %}checked{% endif %}>
+                    <label class="form-check-label" for="genre_{{ g.id }}">{{ g.name }}</label>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if not edit_mode %}
+    <div class="mb-3">
+        <label class="form-label">Обложка *</label>
+        <input type="file" name="cover" class="form-control" accept="image/*" required>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endmacro %}

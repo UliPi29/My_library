@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Рецензия на {{ book.title }}{% endblock %}
+
+{% block content %}
+<h2>Написать рецензию на «{{ book.title }}»</h2>
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Оценка *</label>
+        <select name="rating" class="form-select" required>
+            <option value="5" selected>5 – отлично</option>
+            <option value="4">4 – хорошо</option>
+            <option value="3">3 – удовлетворительно</option>
+            <option value="2">2 – неудовлетворительно</option>
+            <option value="1">1 – плохо</option>
+            <option value="0">0 – ужасно</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Текст рецензии *</label>
+        <textarea name="text" id="review-editor" class="form-control" rows="6"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{{ url_for('main.book_view', book_id=book.id) }}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const easyMDE = new EasyMDE({ element: document.getElementById('review-editor') });
+
+    document.querySelector('form').addEventListener('submit', function () {
+        easyMDE.codemirror.save();
+    });
+</script>
+{% endblock %}
