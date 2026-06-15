@@ -65,8 +65,10 @@ def my_reviews():
         flash('У вас недостаточно прав', 'danger')
         return redirect(url_for('main.index'))
 
+    page = request.args.get('page', 1, type=int)
     reviews = Review.query.filter_by(user_id=current_user.id)\
-                          .order_by(Review.created_at.desc()).all()
+                          .order_by(Review.created_at.desc())\
+                          .paginate(page=page, per_page=10, error_out=False)
     return render_template('my_reviews.html', reviews=reviews)
 
 
