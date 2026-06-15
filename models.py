@@ -66,6 +66,12 @@ class Cover(db.Model):
                         db.ForeignKey('books.id', ondelete='CASCADE'),
                         nullable=False)
 
+class ReviewStatus(db.Model):
+    __tablename__ = 'review_statuses'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    reviews = db.relationship('Review', backref='status', lazy=True)
+
 
 class Review(db.Model):
     __tablename__ = 'reviews'
@@ -80,6 +86,9 @@ class Review(db.Model):
     text = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow,
                            nullable=False)
+    status_id = db.Column(db.Integer,
+                          db.ForeignKey('review_statuses.id', ondelete='CASCADE'),
+                          nullable=False)
 
 
 book_genre = db.Table(
@@ -107,6 +116,10 @@ def seed_data():
                   'Триллер', 'Психологическая драма',
                   'Научная литература', 'История', 'Поэзия']:
             db.session.add(Genre(name=g))
+        db.session.commit()
+
+        for s in ['На рассмотрении', 'Одобрена', 'Отклонена']:
+            db.session.add(ReviewStatus(name=s))
         db.session.commit()
 
         admin_role = Role.query.filter_by(name='admin').first()

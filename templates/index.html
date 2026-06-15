@@ -103,8 +103,10 @@
                         </p>
                         {% set ns = namespace(s=0, c=0) %}
                         {% for r in book.reviews %}
-                            {% set ns.s = ns.s + r.rating %}
-                            {% set ns.c = ns.c + 1 %}
+                            {% if r.status.name == 'Одобрена' %}
+                                {% set ns.s = ns.s + r.rating %}
+                                {% set ns.c = ns.c + 1 %}
+                            {% endif %}
                         {% endfor %}
                         <p class="card-text">
                             Оценка:

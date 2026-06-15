@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Мои рецензии{% endblock %}
+
+{% block content %}
+<h2>Мои рецензии</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Книга</th>
+                <th>Статус</th>
+                <th>Оценка</th>
+                <th>Текст</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reviews %}
+            <tr>
+                <td>{{ r.book.title }}</td>
+                <td>
+                    {% if r.status.name == 'На рассмотрении' %}
+                        <span class="badge bg-warning text-dark">На рассмотрении</span>
+                    {% elif r.status.name == 'Одобрена' %}
+                        <span class="badge bg-success">Одобрена</span>
+                    {% else %}
+                        <span class="badge bg-danger">Отклонена</span>
+                    {% endif %}
+                </td>
+                <td>{{ r.rating }}</td>
+                <td>{{ r.text[:100] }}{% if r.text|length > 100 %}...{% endif %}</td>
+                <td>{{ r.created_at.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center">Вы ещё не оставляли рецензий</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

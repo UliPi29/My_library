@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, send_from_directory, current_app, session
 from flask_login import current_user
-from models import Book, Genre, Review
+from models import Book, Genre, Review, ReviewStatus
 from extensions import db
 from utils import md_to_html
 
@@ -81,26 +81,38 @@ def index():
 @bp.route('/book/<int:book_id>')
 def book_view(book_id):
     book = Book.query.get_or_404(book_id)
-    reviews = Review.query.filter_by(book_id=book_id)\
+    
+    approved_status = ReviewStatus.query.filter_by(name='Одобрена').first()
+    pending_status = ReviewStatus.query.filter_by(name='На рассмотрении').first()
+    reviews = Review.query.filter_by(book_id=book_id, status_id=approved_status.id)\
                           .order_by(Review.created_at.desc()).all()
 
     user_review = None
     if current_user.is_authenticated:
         user_review = Review.query.filter_by(
-            book_id=book_id, user_id=current_user.id
+            book_id=book_id, 
+            user_id=current_user.id,
+            status_id=approved_status.id
         ).first()
 
-    can_review = (
-        current_user.is_authenticated
-        and not user_review
-        and (current_user.is_admin()
-             or current_user.is_moderator()
-             or current_user.role.name == 'user')
-    )
+    can_review = False
+    if current_user.is_authenticated:
+        has_active = Review.query.filter(
+            Review.book_id == book_id,
+            Review.user_id == current_user.id,
+            Review.status_id.in_([approved_status.id, pending_status.id])
+        ).first()
+        
+        can_review = (
+            not has_active
+            and (current_user.is_admin()
+                 or current_user.is_moderator()
+                 or current_user.role.name == 'user')
+        )
 
     avg = db.session.query(db.func.avg(Review.rating))\
-                    .filter_by(book_id=book_id).scalar()
-    cnt = Review.query.filter_by(book_id=book_id).count()
+                    .filter_by(book_id=book_id, status_id=approved_status.id).scalar()
+    cnt = Review.query.filter_by(book_id=book_id, status_id=approved_status.id).count()
 
     return render_template(
         'book_view.html', book=book, reviews=reviews,

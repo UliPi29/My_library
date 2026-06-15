@@ -43,4 +43,4 @@ def login():
 def logout():
     logout_user()
     flash('Вы успешно вышли из системы', 'info')
-    return redirect(request.referrer or url_for('main.index'))
+    return redirect(url_for('main.index'))

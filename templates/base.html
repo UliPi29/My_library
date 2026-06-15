@@ -11,15 +11,26 @@
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.index') }}">📕My library</a>
-            <div class="d-flex align-items-center">
-                {% if current_user.is_authenticated %}
-                    <span class="navbar-text text-light me-3">
-                        {{ current_user.full_name() }}
-                    </span>
-                    <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">Выйти</a>
-                {% else %}
-                    <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.login') }}">Войти</a>
-                {% endif %}
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <div class="d-flex align-items-center gap-3">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role.name == 'user' %}
+                            <a class="text-light text-decoration-none" href="{{ url_for('reviews.my_reviews') }}">Мои рецензии</a>
+                        {% endif %}
+                        {% if current_user.is_moderator() %}
+                            <a class="text-light text-decoration-none" href="{{ url_for('reviews.moderation') }}">Модерация рецензий</a>
+                        {% endif %}                        
+                        <span class="text-light">{{ current_user.full_name() }}</span>
+                        <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">Выйти</a>
+                    {% else %}
+                        <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.login') }}">Войти</a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>

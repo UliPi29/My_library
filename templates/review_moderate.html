@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Рассмотрение рецензии{% endblock %}
+
+{% block content %}
+<h2>Рассмотрение рецензии</h2>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Книга:</strong> {{ review.book.title }} | 
+        <strong>Пользователь:</strong> {{ review.user.full_name() }} | 
+        <strong>Дата:</strong> {{ review.created_at.strftime('%d.%m.%Y %H:%M') }}
+    </div>
+    <div class="card-body">
+        <p><strong>Оценка:</strong> {{ review.rating }}</p>
+        <div class="border rounded p-3 bg-light">
+            {{ md(review.text)|safe }}
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <form action="{{ url_for('reviews.approve_review', review_id=review.id) }}" method="post">
+        <button type="submit" class="btn btn-success">Одобрить</button>
+    </form>
+    <form action="{{ url_for('reviews.reject_review', review_id=review.id) }}" method="post">
+        <button type="submit" class="btn btn-danger">Отклонить</button>
+    </form>
+    <a href="{{ url_for('reviews.moderation') }}" class="btn btn-secondary">Назад к списку</a>
+</div>
+{% endblock %}

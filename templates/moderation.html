@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Модерация рецензий{% endblock %}
+
+{% block content %}
+<h2>Рецензии на рассмотрении</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Книга</th>
+                <th>Пользователь</th>
+                <th>Дата добавления</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reviews.items %}
+            <tr>
+                <td>{{ r.book.title }}</td>
+                <td>{{ r.user.full_name() }}</td>
+                <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('reviews.moderate_review', review_id=r.id) }}" class="btn btn-primary btn-sm">Рассмотреть</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center">Нет рецензий на рассмотрении</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if reviews.has_prev or reviews.has_next %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if reviews.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('reviews.moderation', page=reviews.prev_num) }}">Назад</a>
+        </li>
+        {% endif %}
+        {% for p in reviews.iter_pages() %}
+            {% if p %}
+                {% if p != reviews.page %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('reviews.moderation', page=p) }}">{{ p }}</a></li>
+                {% else %}
+                <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+        {% endfor %}
+        {% if reviews.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('reviews.moderation', page=reviews.next_num) }}">Вперёд</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

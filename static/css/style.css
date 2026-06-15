@@ -237,32 +237,3 @@ a:hover {
 .navbar-brand {
     font-weight: 700;
 }
-
-/* Кнопки модерации рецензий */
-.btn-review-edit {
-    color: var(--mp-green) !important;
-    border: 1px solid var(--mp-green) !important;
-    background-color: transparent !important;
-    border-radius: 0.375rem !important;
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.875rem !important;
-    line-height: 1.5 !important;
-}
-.btn-review-edit:hover {
-    background-color: var(--mp-green) !important;
-    color: #fff !important;
-}
-
-.btn-review-delete {
-    color: #7a2e2e !important;
-    border: 1px solid #7a2e2e !important;
-    background-color: transparent !important;
-    border-radius: 0.375rem !important;
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.875rem !important;
-    line-height: 1.5 !important;
-}
-.btn-review-delete:hover {
-    background-color: #7a2e2e !important;
-    color: #fff !important;
-}
